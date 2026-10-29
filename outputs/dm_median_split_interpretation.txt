@@ -1,0 +1,12 @@
+DIEBOLD-MARIANO TESTS
+- Under squared error loss, the LSTM is significantly more accurate than GARCH(1,1) for 1 of 15 stocks and GARCH is significantly more accurate for 1 (two-sided, 5% level, HLN-corrected, t with T-1 df). After Holm adjustment for 15 tests, 0 stock(s) remain significant.
+- Under absolute error loss, the LSTM is significantly more accurate than GARCH(1,1) for 1 of 15 stocks and GARCH is significantly more accurate for 3 (two-sided, 5% level, HLN-corrected, t with T-1 df). After Holm adjustment for 15 tests, 0 stock(s) remain significant.
+- On the daily cross-sectional average differential (which allows for common crisis shocks), the squared-error DM statistic is -0.93 (p = 0.358) and the absolute-error statistic is -0.19 (p = 0.853).
+- Neither pooled test is significant, so the evidence does not support a systematic accuracy advantage for either model over the crisis window.
+- Caveat: each stock has about 42 daily observations, so DM tests have low power. A non-significant result means the data cannot separate the models, not that the models are equally accurate. Treat the findings as indicative.
+
+MEDIAN SPLIT (RESEARCH QUESTION 2)
+- Stocks were split at the median pre-crisis daily volatility (0.0171) using calibration-window log returns. The Low group has 8 stocks and the High group 7 (the median stock is placed in Low).
+- Mean LSTM RMSE relative to GARCH: +0.94% in the Low group and +0.42% in the High group (negative means LSTM is more accurate). LSTM wins on RMSE for 2/8 Low and 2/7 High stocks.
+- The difference between groups is not statistically reliable (Mann-Whitney p = 0.867; Spearman rho = -0.20, p = 0.483). Pre-crisis volatility does not measurably change the relative accuracy of the two models in this sample.
+- Caveat: groups of 7 to 8 stocks give very little power, and the split uses one volatility measure only. Describe this as exploratory.

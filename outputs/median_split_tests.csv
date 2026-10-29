@@ -1,0 +1,3 @@
+test,statistic,p_value
+"Mann-Whitney U, relative RMSE difference, High vs Low group",26.0,0.8665112665112666
+"Spearman rho, pre-crisis volatility vs relative RMSE difference (all stocks)",-0.1964285714285714,0.48289875627163353

@@ -1,20 +1,3 @@
-"""
-STEP 4 — Forecast comparison and VaR backtesting
-
-Compares GARCH vs LSTM forecast accuracy (RMSE, MAE) per stock, then
-converts each model's volatility forecast into a VaR estimate and runs
-the Kupiec (1995) proportion-of-failures test.
-
-MAPE is deliberately NOT used here: the target being forecast (absolute
-daily return, as a volatility proxy) sits near zero on calm trading days,
-so MAPE's division by the actual value produces enormous, meaningless
-percentages on those days. This is a well-documented limitation of MAPE
-for volatility forecasting, not a bug in the models. MAE is reported
-instead — same interpretability (average error, in return units), no
-division, so no blow-up.
-
-Run last: python 04_compare_backtest.py
-"""
 
 import os
 import glob
@@ -47,15 +30,14 @@ def kupiec_test(actual_returns, forecast_vol, confidence=config.VAR_CONFIDENCE):
     n = len(violations)
     x = int(violations.sum())
 
-    if x == 0 or x == n:
-        # LR statistic is undefined at the boundary; flag rather than compute
-        return {"violations": x, "n_obs": n, "lr_statistic": np.nan, "rejected_at_5pct": None}
+    if x == n:
+        # every day a violation: LR is effectively infinite, reject
+        return {"violations": x, "n_obs": n, "lr_statistic": np.inf, "rejected_at_5pct": True}
 
+    # With zero violations the LR is still defined (convention 0 * log(0) = 0)
     pi_hat = x / n
-    lr = -2 * (
-        (n - x) * np.log(1 - p) + x * np.log(p)
-        - ((n - x) * np.log(1 - pi_hat) + x * np.log(pi_hat))
-    )
+    unrestricted = (n - x) * np.log(1 - pi_hat) + (x * np.log(pi_hat) if x > 0 else 0.0)
+    lr = -2 * ((n - x) * np.log(1 - p) + x * np.log(p) - unrestricted)
     rejected = lr > chi2.ppf(0.95, df=1)
 
     return {"violations": x, "n_obs": n, "lr_statistic": float(lr), "rejected_at_5pct": bool(rejected)}
@@ -80,16 +62,27 @@ def main():
 
         merged = garch_df.merge(lstm_df, on=["date", "realized_abs_return", "actual_return"])
 
+        # Put both models on the same scale. GARCH forecasts sigma (standard deviation).
+        # The LSTM was trained on |return|, whose expected value is only ~0.80 x sigma
+        # under normality, so it forecasts a smaller number. Multiplying by sqrt(pi/2)
+        # converts mean absolute return to sigma, for the proxy, the LSTM forecast and
+        # therefore the VaR step. Without this, the LSTM looks more accurate on RMSE/MAE
+        # and riskier on VaR purely because of the scale difference.
+        k = np.sqrt(np.pi / 2)
+        sigma_proxy = merged["realized_abs_return"] * k
+        garch_sigma = merged["garch_forecast_vol"]
+        lstm_sigma = merged["lstm_forecast_vol"] * k
+
         accuracy_rows.append({
             "ticker": ticker,
-            "garch_rmse": rmse(merged["realized_abs_return"], merged["garch_forecast_vol"]),
-            "lstm_rmse": rmse(merged["realized_abs_return"], merged["lstm_forecast_vol"]),
-            "garch_mae": mae(merged["realized_abs_return"], merged["garch_forecast_vol"]),
-            "lstm_mae": mae(merged["realized_abs_return"], merged["lstm_forecast_vol"]),
+            "garch_rmse": rmse(sigma_proxy, garch_sigma),
+            "lstm_rmse": rmse(sigma_proxy, lstm_sigma),
+            "garch_mae": mae(sigma_proxy, garch_sigma),
+            "lstm_mae": mae(sigma_proxy, lstm_sigma),
         })
 
-        garch_kupiec = kupiec_test(merged["actual_return"].values, merged["garch_forecast_vol"].values)
-        lstm_kupiec = kupiec_test(merged["actual_return"].values, merged["lstm_forecast_vol"].values)
+        garch_kupiec = kupiec_test(merged["actual_return"].values, garch_sigma.values)
+        lstm_kupiec = kupiec_test(merged["actual_return"].values, lstm_sigma.values)
 
         kupiec_rows.append({"ticker": ticker, "model": "GARCH", **garch_kupiec})
         kupiec_rows.append({"ticker": ticker, "model": "LSTM", **lstm_kupiec})

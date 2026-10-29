@@ -1,0 +1,7 @@
+test,statistic,p_value,n,reading
+"DM on daily cross-sectional mean, Squared error, lag 0",-0.9291255548827544,0.3582622439825565,42,GARCH better
+"DM on daily cross-sectional mean, Squared error, lag 3",-1.04020487374291,0.304340238827739,42,GARCH better
+"Wilcoxon across stocks, mean differential, Squared error",,0.04791259765625,15,LSTM lower loss in 4 of 15 stocks
+"DM on daily cross-sectional mean, Absolute error, lag 0",-0.18611127659754234,0.8532752762024279,42,GARCH better
+"DM on daily cross-sectional mean, Absolute error, lag 3",-0.14387328184031847,0.8863053806626026,42,GARCH better
+"Wilcoxon across stocks, mean differential, Absolute error",,0.76153564453125,15,LSTM lower loss in 7 of 15 stocks

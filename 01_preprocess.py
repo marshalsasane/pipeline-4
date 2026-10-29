@@ -1,15 +1,3 @@
-"""
-STEP 1 — Preprocessing
-
-Reads each ticker's TRAINING file from data/raw/train/ and its matching
-TEST file from data/raw/test/, stitches them into one continuous series
-(the test file's first return needs the training file's last price),
-works out the price column automatically, computes log returns, runs the
-ADF stationarity test, and saves a clean version of each stock to
-data/processed/.
-
-Run this first: python 01_preprocess.py
-"""
 
 import os
 import glob

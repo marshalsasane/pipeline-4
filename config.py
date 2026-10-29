@@ -1,7 +1,3 @@
-"""
-Shared settings for the GARCH vs LSTM volatility pipeline.
-Edit the dates and window length here once; every script reads from this file.
-"""
 
 import os
 
@@ -14,7 +10,7 @@ OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
 
 # ---- Study windows ----
 # Calibration window: used to FIT both models (= your training set range)
-CALIBRATION_START = "2019-01-03"
+CALIBRATION_START = "2015-01-01"
 CALIBRATION_END = "2022-08-31"
 
 # Crisis window: used to TEST/forecast and compare against (= your test set range)

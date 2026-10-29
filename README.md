@@ -77,13 +77,13 @@ Open `config.py` in any text editor and check these two windows match
 your training/test split:
 
 ```python
-CALIBRATION_START = "2019-01-03"   # = your training set start
+CALIBRATION_START = "2015-01-01"   # = your training set start
 CALIBRATION_END = "2022-08-31"     # = your training set end
 CRISIS_START = "2022-09-01"        # = your test set start
 CRISIS_END = "2022-10-31"          # = your test set end
 ```
 
-These are already set to match the dates you gave (03/01/2019-31/08/2022
+These are already set to match the dates you gave (01/01/2015-31/08/2022
 training, 01/09/2022-31/10/2022 test), so you shouldn't need to change
 this part unless your split dates differ from stock to stock.
 

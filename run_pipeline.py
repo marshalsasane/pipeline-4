@@ -1,9 +1,3 @@
-"""
-Runs all four pipeline steps in order, so you can trigger the whole
-thing with one command once your 15 CSVs are in data/raw/.
-
-Run: python run_pipeline.py
-"""
 
 import subprocess
 import sys

@@ -1,12 +1,3 @@
-"""
-STEP 2 — GARCH(1,1) modelling
-
-Fits GARCH(1,1) on the calibration window for every processed stock,
-then forecasts volatility across the crisis window.
-Also runs an ARCH-LM diagnostic on each fit so you have that check documented.
-
-Run after 01_preprocess.py: python 02_garch_model.py
-"""
 
 import os
 import glob
@@ -27,27 +18,29 @@ def fit_and_forecast(df, ticker):
     if len(calib) < 30 or len(crisis) == 0:
         raise ValueError(f"Not enough data in calibration ({len(calib)}) or crisis ({len(crisis)}) window")
 
-    # Returns scaled to percent — standard practice, keeps the optimiser numerically stable
-    returns_pct = calib["log_return"] * 100
+    # Returns scaled to percent: standard practice, keeps the optimiser numerically stable
+    calib_pct = (calib["log_return"].values) * 100
+    full_pct = (pd.concat([calib, crisis])["log_return"].values) * 100
 
-    model = arch_model(returns_pct, vol="Garch", p=1, q=1, dist="normal")
-    fitted = model.fit(disp="off")
+    # 1) Estimate parameters on the calibration window ONLY
+    fitted = arch_model(calib_pct, vol="Garch", p=1, q=1, dist="normal").fit(disp="off")
 
-    # ARCH-LM test on standardised residuals — should show no remaining ARCH effect if the fit is good
-    arch_lm_pvalue = het_arch(fitted.resid.dropna())[1]
+    # 2) ARCH-LM on standardised residuals (raw residuals always show clustering,
+    #    so testing them says nothing about whether the model captured it)
+    arch_lm_pvalue = het_arch(pd.Series(fitted.std_resid).dropna())[1]
 
-    # Forecast volatility across the crisis window horizon
-    horizon = len(crisis)
-    forecast = fitted.forecast(horizon=horizon, reindex=False)
-    forecast_variance_pct2 = forecast.variance.values[-1]              # variance, in (percent)^2 units
-    forecast_vol = np.sqrt(forecast_variance_pct2) / 100                # back to log-return scale
+    # 3) Apply the fixed parameters to the full series. conditional_volatility at day t
+    #    uses information up to t-1 only, i.e. a one-step-ahead forecast.
+    filtered = arch_model(full_pct, vol="Garch", p=1, q=1, dist="normal").fix(fitted.params)
+    forecast_vol = np.asarray(filtered.conditional_volatility)[len(calib):] / 100  # back to log-return scale
 
     result = crisis[["date"]].copy()
-    result["garch_forecast_vol"] = forecast_vol
-    result["realized_abs_return"] = crisis["log_return"].abs().values  # simple realized volatility proxy
+    result["garch_forecast_vol"] = forecast_vol                          # sigma forecast
+    result["realized_abs_return"] = crisis["log_return"].abs().values    # |return|, converted to a sigma proxy in step 4
     result["actual_return"] = crisis["log_return"].values
 
-    return result, arch_lm_pvalue, fitted.params
+    max_abs_return = float(calib["log_return"].abs().max())
+    return result, arch_lm_pvalue, fitted.params, max_abs_return
 
 
 def main():
@@ -61,7 +54,7 @@ def main():
         df = pd.read_csv(path)
 
         try:
-            result, arch_lm_pvalue, params = fit_and_forecast(df, ticker)
+            result, arch_lm_pvalue, params, max_abs_return = fit_and_forecast(df, ticker)
         except Exception as e:
             print(f"[SKIPPED] {ticker}: {e}")
             continue
@@ -69,12 +62,16 @@ def main():
         out_path = os.path.join(config.OUTPUT_DIR, "garch_forecasts", f"{ticker}.csv")
         result.to_csv(out_path, index=False)
 
+        alpha = params.get("alpha[1]", np.nan)
+        beta = params.get("beta[1]", np.nan)
         diagnostics.append({
             "ticker": ticker,
             "arch_lm_pvalue": arch_lm_pvalue,
             "no_remaining_arch_effect": arch_lm_pvalue > 0.05,
-            "alpha": params.get("alpha[1]", np.nan),
-            "beta": params.get("beta[1]", np.nan),
+            "alpha": alpha,
+            "beta": beta,
+            "persistence": alpha + beta,
+            "max_abs_return_calib": max_abs_return,   # a very large value here points to a bad price in the data
         })
         print(f"[OK] {ticker}: GARCH fitted, forecast saved -> {out_path}")
 

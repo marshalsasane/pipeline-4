@@ -1,0 +1,3 @@
+group,n_stocks,tickers,mean_pre_vol_daily,mean_garch_rmse,mean_lstm_rmse,mean_rel_rmse_pct,mean_garch_mae,mean_lstm_mae,mean_rel_mae_pct,lstm_wins_rmse,lstm_wins_mae,wilcoxon_p_rmse,dm_sig_lstm_better,dm_sig_garch_better
+Low pre-crisis volatility,8,"AZN, BA, EXPN, HSBA, NG, SGRO, TSCO, ULVR",0.015029781784222162,0.014807566691633913,0.015017207834737683,0.9430888635959381,0.01168628746120727,0.011739918086836006,-0.03875513149147608,2/8,4/8,0.1953125,0,1
+High pre-crisis volatility,7,"BARC, CPG, LGEN, NXT, RIO, RR, SHEL",0.02222701691674431,0.018816963729640767,0.01882499124842094,0.4187526970324429,0.014164234088548246,0.014150445579462304,0.48811957924840593,2/7,3/7,0.375,1,0

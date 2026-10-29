@@ -1,14 +1,3 @@
-"""
-STEP 3 — LSTM modelling
-
-Trains ONE fixed LSTM architecture (set in config.py) on the calibration
-window for every stock, then produces one-step-ahead volatility forecasts
-across the crisis window using the real lagged values each step (walk-forward),
-so it's forecasting on the same footing as the GARCH model.
-
-This is the slowest step in the pipeline — expect it to take a while
-across all 15 stocks. Run after 02_garch_model.py: python 03_lstm_model.py
-"""
 
 import os
 import glob
